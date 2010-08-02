@@ -225,7 +225,9 @@ sub _set_parent
   $self->throw_exception("Cannot make a descendant node the parent of the node")
     if any { $_->id == $self->id } $self->descendants;
 
-  return 0 if ($self->_materialized_path_elements)[-1] == $parent_node->id;
+  if (scalar $self->_materialized_path_elements != 0 && ($self->_materialized_path_elements)[-1] == $parent_node->id) {
+    return 0;
+  }
 
   my @new_grandparent_ids = $parent_node->_materialized_path_elements;
 
@@ -566,8 +568,9 @@ sub set_primary_key
 sub _materialized_path
 {
   my ($self) = (shift, @_);
+  my $matpath = $self->${ \($self->materialized_path_column) };
 
-  return $self->${ \($self->materialized_path_column) };
+  return defined $matpath ? $matpath : '';
 }
 
 # $node->_depth()

@@ -395,10 +395,11 @@ sub attach_child
 
   foreach my $child (@children) {
     if (!blessed $child) {
+      my $child_id = $child;
       my $rs = $self->result_source->resultset;
       $child = $rs->find({
-        $self->_qualified_primary_key_column($rs) => $child,
-      }) or $self->throw_exception("Cannot find child node by id (id: $child)");
+        $self->_qualified_primary_key_column($rs) => $child_id,
+      }) or $self->throw_exception("Cannot find child node by id (id: $child_id)");
     }
   }
 

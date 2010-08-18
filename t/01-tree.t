@@ -5,6 +5,7 @@ use warnings;
 
 use Test::More;                      # last test to print
 use Test::Differences;
+use Test::Exception;
 
 use lib "t/lib";
 use Schema;
@@ -167,6 +168,18 @@ EOMAP
     `0.1.6--0.1.6.7--0.1.6.7.8
 EOMAP
     
+    throws_ok { $nodes{6}->attach_child(1337) } qr/Cannot find child node by id/, 'bad id caught';
+    throws_ok { $nodes{2}->attach_child($nodes{1}) } qr/Cannot make an ancestor node the child of the node/, 'ancestor loop caught';
+    throws_ok { $nodes{2}->attach_child($nodes{2}) } qr/Cannot make a node the parent of itself/, 'self loop caught';
+
+    $nodes{9} = $schema->resultset('Test')->create({ id => 9, name => 'node 9' });
+    $nodes{9}->attach_child($nodes{1});
+     ok($schema->resultset('Test')->map_exists(<<'EOMAP'), '9 becomes new root');
+0.9--0.9.1--0.9.1.2--0.9.1.2.3--0.9.1.2.3.4
+          \                   `-0.9.1.2.3.5
+           `0.9.1.6--0.9.1.6.7--0.9.1.6.7.8
+EOMAP
+   
 
     done_testing();
   };

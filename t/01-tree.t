@@ -13,8 +13,8 @@ use Schema;
   $schema->deploy;
   my $map = <<'EOMAP';
 0.1--0.1.2--0.1.2.3--0.1.2.3.4
-\                  `-0.1.2.3.5
- `-0.1.6
+   \               `-0.1.2.3.5
+    `0.1.6
 0.7
 0.8
 EOMAP
@@ -43,6 +43,8 @@ EOMAP
     ok(!$nodes{6}->is_root, "6 is not a root node");
     ok($nodes{7}->is_root, "7 is a root node");
     ok($nodes{8}->is_root, "8 is a root node");
+
+    done_testing();
   };
 
   subtest 'leafs' => sub {
@@ -54,6 +56,8 @@ EOMAP
     ok($nodes{6}->is_leaf, "6 is a leaf node");
     ok($nodes{7}->is_leaf, "7 is a leaf node");
     ok($nodes{8}->is_leaf, "8 is a leaf node");
+
+    done_testing();
   };
 
 
@@ -71,50 +75,105 @@ EOMAP
   };
 
   subtest 'descendants' => sub {
-    # TODO has_descendant
-    ok($nodes{1}->has_descendant, "1 has descendant");
-    ok($nodes{2}->has_descendant, "2 has descendant");
-    ok($nodes{3}->has_descendant, "3 has descendant");
-    ok(!$nodes{4}->has_descendant, "4 doesn't have a descendant");
-    ok(!$nodes{5}->has_descendant, "5 doesn't have a descendant");
-    ok(!$nodes{6}->has_descendant, "6 doesn't have a descendant");
-    ok(!$nodes{7}->has_descendant, "7 doesn't have a descendant");
-    ok(!$nodes{8}->has_descendant, "8 doesn't have a descendant");
+    ok($nodes{1}->has_descendant($_), "1 has descendant $_") for (2,3,4,5,6);
+    ok($nodes{2}->has_descendant($_), "2 has descendant $_") for (3,4,5);
+    ok($nodes{3}->has_descendant($_), "1 has descendant $_") for (4,5);
 
-#    {
-#      use DBIx::Class::ResultClass::HashRefInflator;
-#      my $rs = $schema->resultset('Test');
-#      $rs->result_class('DBIx::Class::ResultClass::HashRefInflator');
-#      my @hashrefs = $rs->search({});
-#      use Data::Dump qw/dump/;
-#      diag dump(\@hashrefs);
-#    }
-    # TDOO descendants
     my %descendants = ();
     foreach my $node (values %nodes) {
       my @desc_ids = sort map { $_->id } $node->descendants;
-#      use Data::Dump qw/dump/;
-#      diag sprintf("descendants of %s are %s", $node->id, dump(\@desc_ids));
       $descendants{$node->id} = \@desc_ids;
     }
     eq_or_diff($descendants{1}, [2,3,4,5,6] ,"2,3,4,5 are descendants of 1");
+    eq_or_diff($descendants{2}, [3,4,5] ,"3,4,5 are descendants of 2");
+    eq_or_diff($descendants{3}, [4,5] ,"4,5 are descendants of 3");
+    eq_or_diff($descendants{4}, [] ,"no descendants of 4");
+    eq_or_diff($descendants{5}, [] ,"no descendants of 5");
+    eq_or_diff($descendants{6}, [] ,"no descendants of 6");
+    eq_or_diff($descendants{7}, [] ,"no descendants of 7");
+    eq_or_diff($descendants{8}, [] ,"no descendants of 8");
 
     done_testing();
   };
 
+
   subtest 'ancestors' => sub {
+    my %ancestors = ();
+    foreach my $node (values %nodes) {
+      my @anc_ids = sort map { $_->id } $node->ancestors;
+      $ancestors{$node->id} = \@anc_ids;
+    }
+    eq_or_diff($ancestors{1}, [], "no ancestors of 1");
+    eq_or_diff($ancestors{2}, [1], "1 is ancestor of 2");
+    eq_or_diff($ancestors{3}, [1,2], "1,2 are ancestors of 3");
+    eq_or_diff($ancestors{4}, [1,2,3], "1,2,3 are ancestors of 4");
+    eq_or_diff($ancestors{5}, [1,2,3], "1,2,3 are ancestors of 5");
+    eq_or_diff($ancestors{6}, [1], "1 is ancestor of 6");
+    eq_or_diff($ancestors{7}, [], "no ancestors of 7");
+    eq_or_diff($ancestors{8}, [], "no ancestors of 8");
+
+    done_testing();
   };
 
   subtest 'children' => sub {
+    my %children = ();
+    foreach my $node (values %nodes) {
+      my @child_ids = sort map { $_->id } $node->children;
+      $children{$node->id} = \@child_ids;
+    }
+    eq_or_diff($children{1}, [2,6], "2,6 are children of 1");
+    eq_or_diff($children{2}, [3], "3 is child of 2");
+    eq_or_diff($children{3}, [4,5], "4,5 are children of 3");
+    eq_or_diff($children{4}, [], "no children of 4");
+    eq_or_diff($children{5}, [], "no children of 5");
+    eq_or_diff($children{6}, [], "no children of 6");
+    eq_or_diff($children{7}, [], "no children of 7");
+    eq_or_diff($children{8}, [], "no children of 8");
+
+    done_testing();
   };
 
   subtest 'siblings' => sub {
+    my %siblings = ();
+    foreach my $node (values %nodes) {
+      my @sib_ids = sort map { $_->id } $node->siblings;
+      $siblings{$node->id} = \@sib_ids;
+    }
+    eq_or_diff($siblings{1}, [7,8], "7,8 are siblings of 1");
+    eq_or_diff($siblings{2}, [6], "6 is sibling of 2");
+    eq_or_diff($siblings{3}, [], "no siblings of 3");
+    eq_or_diff($siblings{4}, [5], "5 is sibling of 4");
+    eq_or_diff($siblings{5}, [4], "4 is sibling of 5");
+    eq_or_diff($siblings{6}, [2], "2 is sibling of 6");
+    eq_or_diff($siblings{7}, [1,8], "1,8 are siblings of 7");
+    eq_or_diff($siblings{8}, [1,7], "1,7 are siblings of 8");
+
+    done_testing();
   };
 
   subtest 'attach_child' => sub {
+    $nodes{7}->attach_child($nodes{8});
+    ok($schema->resultset('Test')->map_exists(<<'EOMAP'), '8 becomes child of 7');
+0.1--0.1.2--0.1.2.3--0.1.2.3.4
+   \               `-0.1.2.3.5
+    `0.1.6
+0.7--0.7.8
+EOMAP
+
+    $nodes{6}->attach_child($nodes{7});
+    ok($schema->resultset('Test')->map_exists(<<'EOMAP'), '7 becomes child of 6');
+0.1--0.1.2--0.1.2.3--0.1.2.3.4
+   \               `-0.1.2.3.5
+    `0.1.6--0.1.6.7--0.1.6.7.8
+EOMAP
+    
+
+    done_testing();
   };
 
-  subtest 'attach_siblings' => sub {
+  subtest 'attach_sibling' => sub {
+
+    done_testing();
   };
 
   done_testing();

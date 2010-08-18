@@ -372,7 +372,7 @@ sub descendants
     {
       $self->_qualified_materialized_path_column($rs) => { -like =>
         $dbh->quote(
-          $self->_materialized_path . $self->materialized_path_separator . '%'
+          $self->_materialized_path . $self->id . $self->materialized_path_separator . '%'
         )
       },
     }
@@ -664,10 +664,12 @@ sub _qualified_depth_column
 sub _encode_materialized_path
 {
   my ($self, @nodes) = (shift, @_);
-
-  return join($self->materialized_path_separator,
+  my $path = join($self->materialized_path_separator,
     map { blessed $_ ? $_->id : $_ } @nodes
   );
+
+  $path .= $self->materialized_path_separator;
+  return $path;
 }
 
 # $node->_decode_materialized_path($materialized_path_string)

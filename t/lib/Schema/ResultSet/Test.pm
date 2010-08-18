@@ -50,6 +50,7 @@ sub map_exists {
       my $node = $self->find($node_id);
       my $matpath = join(q{.}, @node_ids[0..$#node_ids-1]);
       $matpath = 0 if scalar @node_ids == 1; # root nodes have 0 matpath
+      $matpath .= ".";
       die "Node $node_id not found" unless defined $node;
       my $found_path = $node->materialized_path;
       die "Node $node_id is expected to have path $matpath, but has path $found_path" if $found_path ne $matpath;

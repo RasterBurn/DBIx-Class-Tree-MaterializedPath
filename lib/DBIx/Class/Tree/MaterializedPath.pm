@@ -720,6 +720,15 @@ sub _materialized_path_elements
   return @node_ids;
 }
 
+sub insert {
+  my $self = shift;
+  my $pathcol  = $self->materialized_path_column;
+  my $depthcol = $self->materialized_path_depth_column;
+  $self->$pathcol($self->_encode_materialized_path(0));
+  $self->$depthcol(0);
+  return $self->next::method(@_);
+}
+
 =head1 TODO
 
 =head1 CAVEATS

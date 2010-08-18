@@ -523,7 +523,11 @@ sub is_root
 {
   my ($self) = (shift, @_);
 
-  return !$self->_materialized_path_elements;
+  my @node_ids = $self->_materialized_path_elements;
+  if (scalar @node_ids == 1 && $node_ids[0] == 0) {
+    return 1;
+  }
+  return 0;
 }
 
 =head2 $node->is_branch()

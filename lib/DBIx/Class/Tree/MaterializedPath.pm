@@ -371,7 +371,9 @@ sub descendants
   return $rs->search(
     {
       $self->_qualified_materialized_path_column($rs) => { -like =>
-          $self->_materialized_path . $self->materialized_path_separator . $self->id . $self->materialized_path_separator . '%'
+        $dbh->quote(
+          $self->_materialized_path . $self->materialized_path_separator . '%'
+        )
       },
     }
   );

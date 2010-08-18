@@ -339,13 +339,11 @@ sub children
 {
   my ($self) = (shift, @_);
 
-  my $dbh = $self->result_source->schema->storage->dbh;
-
-  my $rs = $self->result_source->resultset;
+  my $rs = $self->descendants;
 
   return $rs->search(
     {
-      $self->_qualified_materialized_path_column($rs) => $self->_materialized_path . $self->materialized_path_separator . $self->id
+      $self->_qualified_depth_column($rs) => $self->_depth + 1,
     }
   );
 }

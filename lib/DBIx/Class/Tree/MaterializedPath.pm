@@ -236,6 +236,7 @@ sub _set_parent
     my @former_parent_ids = $descendant->_materialized_path_elements;
     $descendant->_materialized_path_elements(
       @new_grandparent_ids,
+      $parent_node->id,
       @former_parent_ids[ -($descendant->_depth - $self->_depth) .. -1 ]
     );
   }

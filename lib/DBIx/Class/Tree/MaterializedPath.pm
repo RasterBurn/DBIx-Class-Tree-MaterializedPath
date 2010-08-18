@@ -507,7 +507,8 @@ sub is_leaf
     }
   );
 
-  return $descendant_rs->single ? 1 : 0;
+  my $row = $descendant_rs->single;
+  return ! defined $row;
 }
 
 =head2 $node->is_root()
